@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import io
 
 # ضبط إعدادات الصفحة
 st.set_page_config(
@@ -182,18 +183,25 @@ else:
 
             st.markdown("---")
 
+            # دالة تحويل البيانات لملف Excel حقيقي (.xlsx)
+            def convert_df_to_excel(df_to_convert, cols):
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_to_convert[cols].to_excel(writer, index=False, sheet_name='Responses')
+                return output.getvalue()
+
             # شيت 1: مستخدمي Primigo
             st.subheader("1️⃣ شيت مستخدمي Primigo Equine (Yes Users)")
             if len(df_primigo_users) > 0:
                 cols_yes = ["Timestamp", "Category", "Primigo_Products", "Ease_Score", "Preferred_Form", "Result_Speed", "Perceived_Value", "Decision_Factor", "Feedback"]
                 st.dataframe(df_primigo_users[cols_yes])
                 
-                csv_yes = df_primigo_users[cols_yes].to_csv(index=False).encode('utf-8-sig')
+                excel_yes = convert_df_to_excel(df_primigo_users, cols_yes)
                 st.download_button(
-                    label="📥 تحميل شيت مستخدمي Primigo (Excel/CSV)",
-                    data=csv_yes,
-                    file_name="Primigo_Current_Users.csv",
-                    mime="text/csv"
+                    label="📥 تحميل شيت مستخدمي Primigo (Excel .xlsx)",
+                    data=excel_yes,
+                    file_name="Primigo_Current_Users.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
             else:
                 st.info("لا توجد إجابات من مستخدمي Primigo حتى الآن.")
@@ -206,17 +214,16 @@ else:
                 cols_no = ["Timestamp", "Category", "Needed_Categories", "Preferred_Form", "Decision_Factor", "Feedback"]
                 st.dataframe(df_non_users[cols_no])
 
-                csv_no = df_non_users[cols_no].to_csv(index=False).encode('utf-8-sig')
+                excel_no = convert_df_to_excel(df_non_users, cols_no)
                 st.download_button(
-                    label="📥 تحميل شيت العملاء المحتملين والاحتياجات (Excel/CSV)",
-                    data=csv_no,
-                    file_name="Primigo_Potential_Leads.csv",
-                    mime="text/csv"
+                    label="📥 تحميل شيت العملاء المحتملين والاحتياجات (Excel .xlsx)",
+                    data=excel_no,
+                    file_name="Primigo_Potential_Leads.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
             else:
                 st.info("لا توجد إجابات من عملاء غير مستخدمين حتى الآن.")
 
     elif passcode != "":
         st.error("كود المرور غير صحيح!")
-            
-
+    
