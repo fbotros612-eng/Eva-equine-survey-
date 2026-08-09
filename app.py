@@ -45,11 +45,20 @@ if mode == "تعبئة الاستبيان (Take Survey)":
     with st.form("survey_form"):
         # Question 1
         supp_types = st.multiselect(
-            "1. ما هي أنواع المكملات الغذائية التي تستخدمها/توصي بها حالياً؟",
-            ["مفاصل وحركة (Joint & Mobility)", "جهاز هضمي ومعدة (Digestive & Gut Health)", 
-             "أملاح واستشفاء (Electrolytes & Recovery)", "حوافر وجلد وشعر (Hoof & Coat)", 
-             "تهدئة وسلوك (Calming)", "فيتامينات ومعادن عامة (Multivitamins)"]
+    "1. ما هي منتجات Primigo Equine التي تستخدمها أو توصي بها حالياً؟",
+    [
+        "Primigo Joinessence (Joint Support)",
+        "Primigo Flex Equine (Mobility Support)",
+        "Primigo Iron Flex B (Iron & Energy)",
+        "Primigo Hemo Boost (Blood & Oxygen)",
+        "Primigo Mega Boost (Hepatic & Detox)",
+        "Primigo Electro Fuel (Electrolytes & Rehydration)",
+        "Primigo H Care (Hoof Support)",
+        "Primigo Gut Guard (Digestive & Probiotic)",
+        "Primigo E Sel Boost (Antioxidant & Muscle)"
+    ]
         )
+        
         
         # Question 2
         ease = st.select_slider(
