@@ -164,7 +164,8 @@ else:
             st.dataframe(df)
             
             # Export to CSV Button
-            csv_data = df.to_csv(index=False).encode('utf-8')
+            csv_data = df.to_csv(index=False).encode('utf-8-sig')
+     
             st.download_button(
                 label="📥 تحميل البيانات شيت Excel/CSV",
                 data=csv_data,
