@@ -1,177 +1,222 @@
-import streamlit as st
+            import streamlit as st
 import pandas as pd
-import plotly.express as px
-import os
+import datetime
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Eva Vet Science - Equine Survey", page_icon="🐴", layout="wide")
+# ضبط إعدادات الصفحة
+st.set_page_config(
+    page_title="إيفا للعلوم البيطرية - استطلاع المكملات",
+    page_icon="🐴",
+    layout="centered"
+)
 
-# --- DATABASE SETUP (Local CSV Storage) ---
-DATA_FILE = "survey_responses.csv"
+# تهيئة قاعدة البيانات في الـ Session State
+if "responses" not in st.session_state:
+    st.session_state.responses = []
 
-if not os.path.exists(DATA_FILE):
-    df_init = pd.DataFrame(columns=[
-        "Category", "Supplement_Types", "Ease_Of_Administration", 
-        "Preferred_Form", "Visible_Results_Time", "Value_For_Money", 
-        "Key_Decision_Factor", "Feedback"
-    ])
-    df_init.to_csv(DATA_FILE, index=False)
-
-def save_response(data_dict):
-    df = pd.read_csv(DATA_FILE)
-    df = pd.concat([df, pd.DataFrame([data_dict])], ignore_index=True)
-    df.to_csv(DATA_FILE, index=False)
-
-# --- APP NAVIGATION ---
-st.sidebar.title("🐴 Eva Vet Science")
-mode = st.sidebar.radio("اختر الوجهة / Select Mode:", ["تعبئة الاستبيان (Take Survey)", "لوحة التحليلات (Surveyor Dashboard)"])
+# القائمة الجانبية لتحديد الخيار (تعبئة الاستبيان أو لوحة التحليلات)
+st.sidebar.title("إيفا للعلوم البيطرية")
+page = st.sidebar.radio("اختر الصفحة:", ["تعبئة الاستبيان (Survey)", "لوحة التحليلات (Surveyor Dashboard)"])
 
 # ==========================================
-# MODE 1: TAKE SURVEY (للعملاء والأطباء)
+# 1. صفحة تعبئة الاستبيان
 # ==========================================
-if mode == "تعبئة الاستبيان (Take Survey)":
-    st.title("🐴 Eva Vet Science - Equine Supplements Survey")
-    st.write("نقدر وقتك وملاحظاتك لتطوير أفضل المكملات الغذائية للخيل. الاستبيان يستغرق أقل من دقيقتين.")
-    
-    category = st.selectbox(
-        "من فضل اختر الفئة التي تنتمي إليها / Select your category:",
-        ["مربّي / صاحب خيل / مدير إصطبل (Owner/Stable Manager)", 
-         "تاجر / مستلزمات خيل / موزع (Retailer/Distributor)", 
-         "طبيب بيطري خيل (Equine Veterinarian)"]
-    )
-    
-    st.divider()
-    
+if page == "تعبئة الاستبيان (Survey)":
+    st.title("🐴 إيفا للعلوم البيطرية - استطلاع مكملات الخيول")
+    st.write("نشكر وقتك وملاحظاتك لمساعدتنا في تقديم أفضل الحلول لتغذية وصحة الخيول.")
+    st.markdown("---")
+
     with st.form("survey_form"):
-        # Question 1
-        supp_types = st.multiselect(
-    "1. ما هي منتجات Primigo Equine التي تستخدمها أو توصي بها حالياً؟",
-    [
-        "Primigo Joinessence (Joint Support)",
-        "Primigo Flex Equine (Mobility Support)",
-        "Primigo Iron Flex B (Iron & Energy)",
-        "Primigo Hemo Boost (Blood & Oxygen)",
-        "Primigo Mega Boost (Hepatic & Detox)",
-        "Primigo Electro Fuel (Electrolytes & Rehydration)",
-        "Primigo H Care (Hoof Support)",
-        "Primigo Gut Guard (Digestive & Probiotic)",
-        "Primigo E Sel Boost (Antioxidant & Muscle)"
-    ]
+        # 1. الفئة
+        category = st.selectbox(
+            "اختر الفئة التي تناسب عملك / نشاطك:",
+            ["طبيب بيطري (Veterinarian)", "مربي / صاحب خيل / مدير إصطبل (Owner/Stable Manager)", "تاجر / موزع أعلاف ومكملات (Feed Retailer/Distributor)", "أخرى (Other)"]
         )
-        
-        
-        # Question 2
-        ease = st.select_slider(
-            "2. ما مدى سهولة إعطاء المكمل الخيل؟ (1 = صعب جداً, 5 = سهل جداً)",
-            options=[1, 2, 3, 4, 5], value=4
+
+        # 2. السؤال المفصلي
+        uses_primigo = st.radio(
+            "هل تستخدم أو توصي بمنتجات Primigo Equine حالياً؟",
+            ["نعم", "لا"]
         )
-        
-        # Question 3
-        pref_form = st.selectbox(
-            "3. ما هو الشكل المفضل لديك للمكملات؟",
-            ["مكعبات / Pellets", "سائل / Liquid", "بودرة / Powder", "معجون / Oral Paste"]
-        )
-        
-        # Question 4
-        results_time = st.selectbox(
-            "4. خلال كم ظهرت التحسنات والنتائج على الخيل؟",
-            ["خلال 1-2 أسبوع", "خلال 3-4 أسابيع", "أكثر من شهر", "لم ألاحظ تحسن"]
-        )
-        
-        # Question 5
-        value = st.radio(
-            "5. تقييم السعر مقابل الجودة والنتائج:",
-            ["ممتاز يستحق", "مناسب", "مرتفع مقارنة بالبدائل"]
-        )
-        
-        # Question 6
-        factor = st.selectbox(
-            "6. العامل الأهم لديك عند اختيار مكمل جديد:",
-            ["توصية الطبيب البيطري", "إقبال الخيل عليه (الطعم/الرائحة)", "المكونات الموثوقة والعلمية", "السعر وحجم العبوة"]
-        )
-        
-        # Question 7
-        feedback = st.text_area("7. اقتراحات أو ملاحظات إضافية للتطوير (اختياري):")
-        
-        submitted = st.form_submit_button("إرسال الاستبيان / Submit Survey")
-        
+
+        # متغيرات لحفظ الإجابات حسب التفرع
+        primigo_products = []
+        needed_categories = []
+        preferred_form = ""
+        decision_factor = ""
+        ease_score = None
+        perceived_value = ""
+        result_speed = ""
+        feedback = ""
+
+        st.markdown("---")
+
+        # ==========================================
+        # فرع (نعم) - مستخدمي Primigo
+        # ==========================================
+        if uses_primigo == "نعم":
+            st.subheader("تفاصيل استخدام منتجات Primigo")
+            
+            primigo_products = st.multiselect(
+                "ما هي منتجات Primigo Equine التي تستخدمها أو توصي بها؟",
+                [
+                    "Primigo Joinessence (Joint Support)",
+                    "Primigo Flex Equine (Mobility Support)",
+                    "Primigo Iron Flex B (Iron & Energy)",
+                    "Primigo Hemo Boost (Blood & Oxygen)",
+                    "Primigo Mega Boost (Hepatic & Detox)",
+                    "Primigo Electro Fuel (Electrolytes & Rehydration)",
+                    "Primigo H Care (Hoof Support)",
+                    "Primigo Gut Guard (Digestive & Probiotic)",
+                    "Primigo E Sel Boost (Antioxidant & Muscle)"
+                ]
+            )
+
+            ease_score = st.select_slider(
+                "ما مدى سهولة إعطاء المكملات للخيل وقبول الخيل لها (Palatability)؟",
+                options=[1, 2, 3, 4, 5],
+                value=3,
+                format_func=lambda x: {1: "صعب جداً (1)", 2: "صعب (2)", 3: "متوسط (3)", 4: "سهل (4)", 5: "سهل جداً وممتاز (5)"}[x]
+            )
+
+            preferred_form = st.radio(
+                "ما هو الشكل المفضل لديك للمكملات؟",
+                ["مكعبات (Pellets)", "سائل (Liquid)", "بودرة (Powder)", "معجون (Oral Paste)"]
+            )
+
+            result_speed = st.selectbox(
+                "ما هي المدة المتوقعة بالنسبة لك لملاحظة نتائج المكمل الغذائي؟",
+                ["خلال 1-2 أسبوع", "خلال 3-4 أسابيع", "أكثر من شهر", "تعتمد على حالة الخيل"]
+            )
+
+            perceived_value = st.radio(
+                "كيف ترى أسعار مكملات Primigo مقارنة بجودتها والبدائل المستوردة؟",
+                ["مناسب جداً ومنافس", "مناسب نوعاً ما", "مرتفع قليلاً", "مرتفع جداً"]
+            )
+
+            decision_factor = st.selectbox(
+                "ما هو العامل الأهم بالنسبة لك عند اختيار المكمل الغذائي؟",
+                ["التركيبة والجودة العلمية", "السعر والوفرة الاقتصادية", "سهولة الاستخدام وقبول الخيل", "توصية البيطريين وسمعة الشركة"]
+            )
+
+            feedback = st.text_area("اقتراحات أو ملاحظات إضافية للتطوير (اختياري):")
+
+        # ==========================================
+        # فرع (لا) - العملاء المحتملين
+        # ==========================================
+        else:
+            st.subheader("احتياجات الخيول والمفضلات")
+
+            needed_categories = st.multiselect(
+                "ما هي أنواع المكملات التي تحتاج وجودها للخيول حالياً؟",
+                [
+                    "مفاصل وحركة (Joint & Mobility)",
+                    "جهاز هضمي ومعدة (Digestive & Gut Health)",
+                    "أملاح واستشفاء (Electrolytes & Recovery)",
+                    "حوافر وجلد وشعر (Hoof & Coat)",
+                    "تهدئة وسلوك (Calming)",
+                    "فيتامينات ومعادن عامة (Multivitamins)",
+                    "مضادات أكسدة وعضلات (Antioxidants & Muscle)"
+                ]
+            )
+
+            preferred_form = st.radio(
+                "ما هو الشكل المفضل لديك لتناول المكملات؟",
+                ["مكعبات (Pellets)", "سائل (Liquid)", "بودرة (Powder)", "معجون (Oral Paste)"]
+            )
+
+            decision_factor = st.selectbox(
+                "ما هو العامل الأهم بالنسبة لك عند اختيار المكمل الغذائي؟",
+                ["التركيبة والجودة العلمية", "السعر والوفرة الاقتصادية", "سهولة الاستخدام وقبول الخيل", "توصية البيطريين وسمعة الشركة"]
+            )
+
+            feedback = st.text_area("ما هي أكثر المشاكل التي تواجهها مع المكملات المتاحة في السوق حالياً؟ (اختياري):")
+
+        # زر الإرسال
+        submitted = st.form_submit_button("إرسال الاستبيان")
+
         if submitted:
+            # تجهيز السجل
             response_data = {
+                "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Category": category,
-                "Supplement_Types": ", ".join(supp_types),
-                "Ease_Of_Administration": ease,
-                "Preferred_Form": pref_form,
-                "Visible_Results_Time": results_time,
-                "Value_For_Money": value,
-                "Key_Decision_Factor": factor,
-                "Feedback": feedback
+                "Uses_Primigo": uses_primigo,
+                "Primigo_Products": ", ".join(primigo_products) if primigo_products else "N/A",
+                "Needed_Categories": ", ".join(needed_categories) if needed_categories else "N/A",
+                "Preferred_Form": preferred_form,
+                "Decision_Factor": decision_factor,
+                "Ease_Score": ease_score if ease_score is not None else "N/A",
+                "Perceived_Value": perceived_value if perceived_value else "N/A",
+                "Result_Speed": result_speed if result_speed else "N/A",
+                "Feedback": feedback if feedback else "N/A"
             }
-            save_response(response_data)
-            st.success("✅ تم إرسال إجابتك بنجاح! شكراً لوقتك ومشاركتك.")
+
+            st.session_state.responses.append(response_data)
+            st.success("تم إرسال إجاباتك بنجاح! شكراً لمشاركتك مع إيفا للعلوم البيطرية.")
 
 # ==========================================
-# MODE 2: SURVEYOR DASHBOARD (للمسؤول فقط)
+# 2. لوحة التحليلات (Surveyor Dashboard)
 # ==========================================
 else:
-    st.title("🔒 Surveyor Dashboard & AI Analysis")
+    st.title("📊 لوحة تحليلات الاستبيان (خاصة بالشركة)")
     
-    # PASSCODE PROTECTION
-    passcode = st.text_input("أدخل كود المرور للوصول للنتائج (Enter Surveyor Passcode):", type="password")
-    
-    if passcode == "eva2026":  # يمكنك تغيير كلمة السر من هنا
-        st.success("تم التحقق بنجاح! مرحباً بك في لوحة التحليلات.")
-        
-        df = pd.read_csv(DATA_FILE)
-        
-        if len(df) == 0:
+    passcode = st.text_input("أدخل كود المرور للوصول للنتائج:", type="password")
+
+    if passcode == "eva2026":
+        st.success("تم الوصول بنجاح!")
+
+        if len(st.session_state.responses) == 0:
             st.warning("لا توجد إجابات مسجلة حتى الآن.")
         else:
-            # --- METRICS OVERVIEW ---
+            df = pd.DataFrame(st.session_state.responses)
+
+            # فصل البيانات لـ 2 DataFrames منفصلين
+            df_primigo_users = df[df["Uses_Primigo"] == "نعم"]
+            df_non_users = df[df["Uses_Primigo"] == "لا"]
+
+            st.markdown("### 📈 إحصائيات عامة")
             col1, col2, col3 = st.columns(3)
-            col1.metric("إجمالي الإجابات (Total Responses)", len(df))
-            col2.metric("متوسط سهولة الاستخدام", f"{df['Ease_Of_Administration'].mean():.2f} / 5")
-            col3.metric("أكثر الشكل تفضيلاً", df['Preferred_Form'].mode()[0] if not df.empty else "N/A")
-            
-            st.divider()
-            
-            # --- GRAPHS & VISUALIZATIONS ---
-            g_col1, g_col2 = st.columns(2)
-            
-            with g_col1:
-                st.subheader("📊 توزيع الفئات المشاركة")
-                fig1 = px.pie(df, names="Category", hole=0.4, color_discrete_sequence=px.colors.qualitative.Pastel)
-                st.plotly_chart(fig1, use_container_width=True)
-                
-                st.subheader("🥣 الشكل المفضل للمكملات")
-                fig3 = px.bar(df['Preferred_Form'].value_counts().reset_index(), x='Preferred_Form', y='count',
-                              labels={'Preferred_Form': 'الشكل', 'count': 'العدد'}, color_discrete_sequence=['#2E86C1'])
-                st.plotly_chart(fig3, use_container_width=True)
+            col1.metric("إجمالي المشاركين", len(df))
+            col2.metric("مستخدمي Primigo (نعم)", len(df_primigo_users))
+            col3.metric("عملاء محتملين (لا)", len(df_non_users))
 
-            with g_col2:
-                st.subheader("⏱️ سرعة ظهور النتائج")
-                fig2 = px.bar(df['Visible_Results_Time'].value_counts().reset_index(), x='Visible_Results_Time', y='count',
-                              labels={'Visible_Results_Time': 'الفترة', 'count': 'العدد'}, color_discrete_sequence=['#27AE60'])
-                st.plotly_chart(fig2, use_container_width=True)
-                
-                st.subheader("💡 أهم عامل لاختيار المنتج")
-                fig4 = px.pie(df, names="Key_Decision_Factor", color_discrete_sequence=px.colors.qualitative.Set3)
-                st.plotly_chart(fig4, use_container_width=True)
+            st.markdown("---")
 
-            st.divider()
-            
-            # --- RAW DATA TABLE & DOWNLOAD ---
-            st.subheader("📋 جدول الإجابات الكامل (Raw Data)")
-            st.dataframe(df)
-            
-            # Export to CSV Button
-            csv_data = df.to_csv(index=False).encode('utf-8-sig')
-     
-            st.download_button(
-                label="📥 تحميل البيانات شيت Excel/CSV",
-                data=csv_data,
-                file_name="eva_equine_survey_results.csv",
-                mime="text/csv"
-            )
-            
+            # عرض شيت 1: مستخدمي Primigo
+            st.subheader("1️⃣ شيت مستخدمي Primigo Equine (Yes Users)")
+            if len(df_primigo_users) > 0:
+                cols_yes = ["Timestamp", "Category", "Primigo_Products", "Ease_Score", "Preferred_Form", "Result_Speed", "Perceived_Value", "Decision_Factor", "Feedback"]
+                st.dataframe(df_primigo_users[cols_yes])
+                
+                # زر تحميل ملف CSV المخصص لمستخدمي Primigo
+                csv_yes = df_primigo_users[cols_yes].to_csv(index=False).encode('utf-8-sig')
+                st.download_button(
+                    label="📥 تحميل شيت مستخدمي Primigo (Excel/CSV)",
+                    data=csv_yes,
+                    file_name="Primigo_Current_Users.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.info("لا توجد إجابات من مستخدمي Primigo حتى الآن.")
+
+            st.markdown("---")
+
+            # عرض شيت 2: العملاء المحتملين
+            st.subheader("2️⃣ شيت الاحتياجات والعملاء المحتملين (Non-Users Leads)")
+            if len(df_non_users) > 0:
+                cols_no = ["Timestamp", "Category", "Needed_Categories", "Preferred_Form", "Decision_Factor", "Feedback"]
+                st.dataframe(df_non_users[cols_no])
+
+                # زر تحميل ملف CSV المخصص للعملاء المحتملين
+                csv_no = df_non_users[cols_no].to_csv(index=False).encode('utf-8-sig')
+                st.download_button(
+                    label="📥 تحميل شيت العملاء المحتملين والاحتياجات (Excel/CSV)",
+                    data=csv_no,
+                    file_name="Primigo_Potential_Leads.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.info("لا توجد إجابات من عملاء غير مستخدمين حتى الآن.")
+
     elif passcode != "":
-        st.error("❌ كود المرور غير صحيح. يرجى المحاولة مرة أخرى.")
+        st.error("كود المرور غير صحيح!")
+
