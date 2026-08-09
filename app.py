@@ -25,14 +25,14 @@ if page == "تعبئة الاستبيان (Survey)":
     st.write("نشكر وقتك وملاحظاتك لمساعدتنا في تقديم أفضل الحلول لتغذية وصحة الخيول.")
     st.markdown("---")
 
-    # أسئلة تحديد الهوية (خارج الـ Form ليتغير النموذج فوراً)
+    # أسئلة تحديد الهوية
     category = st.selectbox(
         "اختر الفئة التي تناسب عملك / نشاطك:",
         ["طبيب بيطري (Veterinarian)", "مربي / صاحب خيل / مدير إصطبل (Owner/Stable Manager)", "تاجر / موزع أعلاف ومكملات (Feed Retailer/Distributor)", "أخرى (Other)"]
     )
 
     uses_primigo = st.radio(
-        "هل تستخدم أو توصي بمنتجات Primigo Equine حالياً؟",
+        "هل تستخدم منتجات Primigo Equine حالياً؟",
         ["نعم", "لا"]
     )
 
@@ -43,10 +43,8 @@ if page == "تعبئة الاستبيان (Survey)":
     # ==========================================
     if uses_primigo == "نعم":
         with st.form("primigo_user_form"):
-            st.subheader("📋 أسئلة تقييم تجربة منتجات Primigo Equine")
-
             primigo_products = st.multiselect(
-                "ما هي منتجات Primigo Equine التي تستخدمها أو توصي بها؟",
+                "ما هي منتجات Primigo Equine التي تستخدمها؟",
                 [
                     "Primigo Joinessence (Joint Support)",
                     "Primigo Flex Equine (Mobility Support)",
@@ -109,12 +107,10 @@ if page == "تعبئة الاستبيان (Survey)":
                 st.success("تم إرسال إجاباتك بنجاح! شكراً لمشاركتك مع إيفا للعلوم البيطرية.")
 
     # ==========================================
-    # 🔴 فرع غير مستخدمي Primigo / العملاء المحتملين (إجابة: لا)
+    # 🔴 فرع غير مستخدمي Primigo (إجابة: لا)
     # ==========================================
     else:
         with st.form("non_user_form"):
-            st.subheader("📋 أسئلة تحديد احتياجات الخيول في السوق")
-
             needed_categories = st.multiselect(
                 "ما هي أنواع المكملات التي تحتاج وجودها للخيول حالياً؟",
                 [
@@ -223,5 +219,4 @@ else:
     elif passcode != "":
         st.error("كود المرور غير صحيح!")
             
-                    
 
