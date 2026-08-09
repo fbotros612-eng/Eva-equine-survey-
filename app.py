@@ -25,37 +25,26 @@ if page == "تعبئة الاستبيان (Survey)":
     st.write("نشكر وقتك وملاحظاتك لمساعدتنا في تقديم أفضل الحلول لتغذية وصحة الخيول.")
     st.markdown("---")
 
-    with st.form("survey_form"):
-        # 1. الفئة
-        category = st.selectbox(
-            "اختر الفئة التي تناسب عملك / نشاطك:",
-            ["طبيب بيطري (Veterinarian)", "مربي / صاحب خيل / مدير إصطبل (Owner/Stable Manager)", "تاجر / موزع أعلاف ومكملات (Feed Retailer/Distributor)", "أخرى (Other)"]
-        )
+    # أسئلة تحديد الهوية (خارج الـ Form ليتغير النموذج فوراً)
+    category = st.selectbox(
+        "اختر الفئة التي تناسب عملك / نشاطك:",
+        ["طبيب بيطري (Veterinarian)", "مربي / صاحب خيل / مدير إصطبل (Owner/Stable Manager)", "تاجر / موزع أعلاف ومكملات (Feed Retailer/Distributor)", "أخرى (Other)"]
+    )
 
-        # 2. السؤال المفصلي
-        uses_primigo = st.radio(
-            "هل تستخدم أو توصي بمنتجات Primigo Equine حالياً؟",
-            ["نعم", "لا"]
-        )
+    uses_primigo = st.radio(
+        "هل تستخدم أو توصي بمنتجات Primigo Equine حالياً؟",
+        ["نعم", "لا"]
+    )
 
-        # متغيرات لحفظ الإجابات حسب التفرع
-        primigo_products = []
-        needed_categories = []
-        preferred_form = ""
-        decision_factor = ""
-        ease_score = None
-        perceived_value = ""
-        result_speed = ""
-        feedback = ""
+    st.markdown("---")
 
-        st.markdown("---")
+    # ==========================================
+    # 🟢 فرع مستخدمي Primigo (إجابة: نعم)
+    # ==========================================
+    if uses_primigo == "نعم":
+        with st.form("primigo_user_form"):
+            st.subheader("📋 أسئلة تقييم تجربة منتجات Primigo Equine")
 
-        # ==========================================
-        # فرع (نعم) - مستخدمي Primigo
-        # ==========================================
-        if uses_primigo == "نعم":
-            st.subheader("تفاصيل استخدام منتجات Primigo")
-            
             primigo_products = st.multiselect(
                 "ما هي منتجات Primigo Equine التي تستخدمها أو توصي بها؟",
                 [
@@ -100,11 +89,31 @@ if page == "تعبئة الاستبيان (Survey)":
 
             feedback = st.text_area("اقتراحات أو ملاحظات إضافية للتطوير (اختياري):")
 
-        # ==========================================
-        # فرع (لا) - العملاء المحتملين
-        # ==========================================
-        else:
-            st.subheader("احتياجات الخيول والمفضلات")
+            submitted_yes = st.form_submit_button("إرسال الاستبيان")
+
+            if submitted_yes:
+                response_data = {
+                    "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Category": category,
+                    "Uses_Primigo": "نعم",
+                    "Primigo_Products": ", ".join(primigo_products) if primigo_products else "غير محدد",
+                    "Needed_Categories": "N/A",
+                    "Preferred_Form": preferred_form,
+                    "Decision_Factor": decision_factor,
+                    "Ease_Score": ease_score,
+                    "Perceived_Value": perceived_value,
+                    "Result_Speed": result_speed,
+                    "Feedback": feedback if feedback else "لا يوجد"
+                }
+                st.session_state.responses.append(response_data)
+                st.success("تم إرسال إجاباتك بنجاح! شكراً لمشاركتك مع إيفا للعلوم البيطرية.")
+
+    # ==========================================
+    # 🔴 فرع غير مستخدمي Primigo / العملاء المحتملين (إجابة: لا)
+    # ==========================================
+    else:
+        with st.form("non_user_form"):
+            st.subheader("📋 أسئلة تحديد احتياجات الخيول في السوق")
 
             needed_categories = st.multiselect(
                 "ما هي أنواع المكملات التي تحتاج وجودها للخيول حالياً؟",
@@ -131,27 +140,24 @@ if page == "تعبئة الاستبيان (Survey)":
 
             feedback = st.text_area("ما هي أكثر المشاكل التي تواجهها مع المكملات المتاحة في السوق حالياً؟ (اختياري):")
 
-        # زر الإرسال
-        submitted = st.form_submit_button("إرسال الاستبيان")
+            submitted_no = st.form_submit_button("إرسال الاستبيان")
 
-        if submitted:
-            # تجهيز السجل
-            response_data = {
-                "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Category": category,
-                "Uses_Primigo": uses_primigo,
-                "Primigo_Products": ", ".join(primigo_products) if primigo_products else "N/A",
-                "Needed_Categories": ", ".join(needed_categories) if needed_categories else "N/A",
-                "Preferred_Form": preferred_form,
-                "Decision_Factor": decision_factor,
-                "Ease_Score": ease_score if ease_score is not None else "N/A",
-                "Perceived_Value": perceived_value if perceived_value else "N/A",
-                "Result_Speed": result_speed if result_speed else "N/A",
-                "Feedback": feedback if feedback else "N/A"
-            }
-
-            st.session_state.responses.append(response_data)
-            st.success("تم إرسال إجاباتك بنجاح! شكراً لمشاركتك مع إيفا للعلوم البيطرية.")
+            if submitted_no:
+                response_data = {
+                    "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Category": category,
+                    "Uses_Primigo": "لا",
+                    "Primigo_Products": "N/A",
+                    "Needed_Categories": ", ".join(needed_categories) if needed_categories else "غير محدد",
+                    "Preferred_Form": preferred_form,
+                    "Decision_Factor": decision_factor,
+                    "Ease_Score": "N/A",
+                    "Perceived_Value": "N/A",
+                    "Result_Speed": "N/A",
+                    "Feedback": feedback if feedback else "لا يوجد"
+                }
+                st.session_state.responses.append(response_data)
+                st.success("تم إرسال احتياجاتك بنجاح! شكراً لمشاركتك مع إيفا للعلوم البيطرية.")
 
 # ==========================================
 # 2. لوحة التحليلات (Surveyor Dashboard)
@@ -169,7 +175,6 @@ else:
         else:
             df = pd.DataFrame(st.session_state.responses)
 
-            # فصل البيانات لـ 2 DataFrames منفصلين
             df_primigo_users = df[df["Uses_Primigo"] == "نعم"]
             df_non_users = df[df["Uses_Primigo"] == "لا"]
 
@@ -181,13 +186,12 @@ else:
 
             st.markdown("---")
 
-            # عرض شيت 1: مستخدمي Primigo
+            # شيت 1: مستخدمي Primigo
             st.subheader("1️⃣ شيت مستخدمي Primigo Equine (Yes Users)")
             if len(df_primigo_users) > 0:
                 cols_yes = ["Timestamp", "Category", "Primigo_Products", "Ease_Score", "Preferred_Form", "Result_Speed", "Perceived_Value", "Decision_Factor", "Feedback"]
                 st.dataframe(df_primigo_users[cols_yes])
                 
-                # زر تحميل ملف CSV المخصص لمستخدمي Primigo
                 csv_yes = df_primigo_users[cols_yes].to_csv(index=False).encode('utf-8-sig')
                 st.download_button(
                     label="📥 تحميل شيت مستخدمي Primigo (Excel/CSV)",
@@ -200,13 +204,12 @@ else:
 
             st.markdown("---")
 
-            # عرض شيت 2: العملاء المحتملين
+            # شيت 2: العملاء المحتملين
             st.subheader("2️⃣ شيت الاحتياجات والعملاء المحتملين (Non-Users Leads)")
             if len(df_non_users) > 0:
                 cols_no = ["Timestamp", "Category", "Needed_Categories", "Preferred_Form", "Decision_Factor", "Feedback"]
                 st.dataframe(df_non_users[cols_no])
 
-                # زر تحميل ملف CSV المخصص للعملاء المحتملين
                 csv_no = df_non_users[cols_no].to_csv(index=False).encode('utf-8-sig')
                 st.download_button(
                     label="📥 تحميل شيت العملاء المحتملين والاحتياجات (Excel/CSV)",
@@ -219,5 +222,6 @@ else:
 
     elif passcode != "":
         st.error("كود المرور غير صحيح!")
+            
                     
 
